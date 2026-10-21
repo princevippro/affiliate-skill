@@ -1,0 +1,596 @@
+{
+  "schema": "aicw.app.v1",
+  "name": "Affiliate Control Center",
+  "icon": "🛍️",
+  "version": "1.7.0",
+  "description": "Trung tâm điều hành affiliate cho mọi ngành hàng: quét sản phẩm Shopee Affiliate đúng ngách, lấy link, đăng bài/reel Facebook hàng loạt, sổ đơn và hoa hồng.",
+  "category": "Marketing",
+  "window": {
+    "entry": "assets/app.html",
+    "style": "clean",
+    "libs": [
+      "chartjs"
+    ],
+    "session": "dedicated"
+  },
+  "backend": {
+    "runtime": "node",
+    "entry": "backend/main.mjs",
+    "commands": {
+      "state": {
+        "description": "Toàn bộ dữ liệu cho cửa sổ: cấu hình, tổng hoa hồng, đơn, catalog, bài đã đăng, kết quả quét, lượt đăng.",
+        "agent": true
+      },
+      "saveConfig": {
+        "description": "Lưu cấu hình shop (thương hiệu, ngành, từ khoá lọc, Facebook, Shopee, nội dung, thuế).",
+        "mutating": true,
+        "args": {
+          "type": "object",
+          "required": [
+            "config"
+          ],
+          "properties": {
+            "config": {
+              "type": "object"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "suggest": {
+        "description": "Gợi ý từ khoá lọc ngách từ tên ngành.",
+        "args": {
+          "type": "object",
+          "properties": {
+            "niche": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "health": {
+        "description": "Kiểm tra máy: Chrome Shopee, Page Facebook, FFmpeg.",
+        "agent": true
+      },
+      "scan": {
+        "description": "Qu?t Shopee Affiliate: 1 t? kho?, 1 ng?ch, ho?c t?t c? ng?ch c?a shop (niche=\"all\"); ch? gi? s?n ph?m ??ng ng?ch, g?n nh?n ng?ch.",
+        "mutating": true,
+        "agent": true,
+        "job": true,
+        "timeoutMs": 900000,
+        "args": {
+          "type": "object",
+          "properties": {
+            "keyword": {
+              "type": "string"
+            },
+            "minCommission": {
+              "type": "number",
+              "minimum": 0
+            },
+            "niche": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
+            },
+            "platform": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "getLink": {
+        "description": "Lấy link affiliate s.shopee.vn thật cho 1 sản phẩm trong lần quét gần nhất.",
+        "agent": true,
+        "timeoutMs": 90000,
+        "args": {
+          "type": "object",
+          "required": [
+            "index"
+          ],
+          "properties": {
+            "index": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "addToCatalog": {
+        "description": "Thêm sản phẩm vào catalog của shop.",
+        "mutating": true,
+        "agent": true,
+        "args": {
+          "type": "object",
+          "required": [
+            "name"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "price": {
+              "type": "string"
+            },
+            "commission": {
+              "type": "string"
+            },
+            "img": {
+              "type": "string"
+            },
+            "link": {
+              "type": "string"
+            },
+            "note": {
+              "type": "string"
+            },
+            "platform": {
+              "type": "string"
+            },
+            "niche": {
+              "type": "string"
+            },
+            "priority": {
+              "type": "number"
+            },
+            "sourceProductId": {
+              "type": "string"
+            },
+            "productFingerprint": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "removeFromCatalog": {
+        "description": "Xoá sản phẩm khỏi catalog.",
+        "mutating": true,
+        "args": {
+          "type": "object",
+          "required": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "addOrder": {
+        "description": "Ghi 1 đơn đã chốt vào sổ (tính hoa hồng nếu không nhập sẵn).",
+        "mutating": true,
+        "agent": true,
+        "args": {
+          "type": "object",
+          "required": [
+            "product",
+            "orderValue",
+            "commissionRate"
+          ],
+          "properties": {
+            "product": {
+              "type": "string"
+            },
+            "orderValue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "commissionRate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "commission": {
+              "type": "number",
+              "minimum": 0
+            },
+            "date": {
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                "pending",
+                "confirmed",
+                "paid",
+                "cancelled"
+              ]
+            },
+            "source": {
+              "type": "string"
+            },
+            "platform": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "setOrderStatus": {
+        "description": "Đổi trạng thái 1 đơn.",
+        "mutating": true,
+        "agent": true,
+        "args": {
+          "type": "object",
+          "required": [
+            "id",
+            "status"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                "pending",
+                "confirmed",
+                "paid",
+                "cancelled"
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "deleteOrder": {
+        "description": "Xoá 1 đơn khỏi sổ.",
+        "mutating": true,
+        "args": {
+          "type": "object",
+          "required": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "postBatch": {
+        "description": "Đăng 1 lượt nhiều sản phẩm lên Facebook Page: lấy link thật bằng code, rồi agent làm poster/reel và đăng từng bài.",
+        "mutating": true,
+        "job": true,
+        "timeoutMs": 10800000,
+        "args": {
+          "type": "object",
+          "required": [
+            "items"
+          ],
+          "properties": {
+            "items": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 10,
+              "items": {
+                "type": "object",
+                "required": [
+                  "index",
+                  "name",
+                  "type"
+                ],
+                "properties": {
+                  "index": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "enum": [
+                      "post",
+                      "reel"
+                    ]
+                  },
+                  "price": {
+                    "type": "string"
+                  },
+                  "commission": {
+                    "type": "string"
+                  },
+                  "img": {
+                    "type": "string"
+                  },
+                  "link": {
+                    "type": "string"
+                  },
+                  "caption": {
+                    "type": "string"
+                  },
+                  "platform": {
+                    "type": "string"
+                  },
+                  "catalogId": {
+                    "type": "string"
+                  },
+                  "sourceProductId": {
+                    "type": "string"
+                  },
+                  "productFingerprint": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "max": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10
+            },
+            "source": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "importLegacy": {
+        "description": "Nhập 1 lần dữ liệu từ bộ kit cũ (KIT-CONFIG, ledger, catalog trong workspace).",
+        "mutating": true
+      },
+      "resetAll": {
+        "description": "Xoá toàn bộ cấu hình và dữ liệu của app (cần confirm='XOA').",
+        "mutating": true,
+        "args": {
+          "type": "object",
+          "required": [
+            "confirm"
+          ],
+          "properties": {
+            "confirm": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "migrate": {
+        "description": "Nâng cấp dữ liệu khi đổi phiên bản."
+      },
+      "listSchedules": {
+        "description": "Danh s?ch l?ch ??ng t? ??ng v? l?n ch?y k?/g?n nh?t.",
+        "agent": true
+      },
+      "saveSchedules": {
+        "description": "L?u c?c l?ch ??ng t? ??ng (gi?, ng?y trong tu?n, ng?ch, s? b?i m?i ng?ch, ki?u b?i) v? ??ng k? cron.",
+        "mutating": true,
+        "args": {
+          "type": "object",
+          "required": [
+            "schedules"
+          ],
+          "properties": {
+            "schedules": {
+              "type": "array",
+              "maxItems": 12,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "time": {
+                    "type": "string"
+                  },
+                  "days": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 6
+                    }
+                  },
+                  "niches": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "perNiche": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "type": {
+                    "enum": [
+                      "post",
+                      "reel",
+                      "mix"
+                    ]
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "platform": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "autoRun": {
+        "description": "Ch?y 1 l?ch ??ng: qu?t c?c ng?ch ?? ch?n, ch?n s?n ph?m hoa h?ng cao ch?a ??ng, l?y link v? ??ng.",
+        "mutating": true,
+        "agent": true,
+        "job": true,
+        "timeoutMs": 10800000,
+        "args": {
+          "type": "object",
+          "properties": {
+            "schedule": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "syncOrders": {
+        "description": "Đồng bộ đơn THẬT từ báo cáo chuyển đổi Shopee Affiliate (không trùng, cập nhật trạng thái).",
+        "mutating": true,
+        "agent": true,
+        "job": true,
+        "timeoutMs": 150000
+      },
+      "recordPost": {
+        "description": "Ghi m?t b?i Facebook ?? ??ng v? x?c minh v?o l?ch s? ?? b? ??m t?ng; ch?ng tr?ng theo postId/postUrl.",
+        "mutating": true,
+        "agent": true,
+        "args": {
+          "type": "object",
+          "required": [
+            "name",
+            "published"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "type": {
+              "enum": [
+                "post",
+                "reel"
+              ]
+            },
+            "link": {
+              "type": "string"
+            },
+            "price": {
+              "type": "string"
+            },
+            "commission": {
+              "type": "string"
+            },
+            "postUrl": {
+              "type": "string"
+            },
+            "postId": {
+              "type": "string"
+            },
+            "published": {
+              "const": true
+            },
+            "source": {
+              "type": "string"
+            },
+            "at": {
+              "type": "string"
+            },
+            "platform": {
+              "type": "string"
+            },
+            "sourceProductId": {
+              "type": "string"
+            },
+            "productFingerprint": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "savePlatforms": {
+        "description": "L?u danh s?ch s?n ??ng (CRUD), ch?n xo? s?n ?ang c? d? li?u.",
+        "mutating": true,
+        "agent": true,
+        "args": {
+          "type": "object",
+          "required": [
+            "platforms"
+          ],
+          "properties": {
+            "platforms": {
+              "type": "array",
+              "maxItems": 30,
+              "items": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "region": {
+                    "type": "string"
+                  },
+                  "currency": {
+                    "type": "string"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "connected": {
+                    "type": "boolean"
+                  },
+                  "connector": {
+                    "enum": [
+                      "shopee",
+                      "manual"
+                    ]
+                  },
+                  "color": {
+                    "type": "string"
+                  },
+                  "supports": {
+                    "type": "object"
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "openShopeeChrome": {
+        "description": "M? Chrome Affiliate ri?ng ? c?ng CDP ?? c?u h?nh v? ?i th?ng t?i trang l?y s?n ph?m.",
+        "mutating": true,
+        "agent": true
+      }
+    }
+  },
+  "permissions": {
+    "llm": false,
+    "agent": true,
+    "host": [
+      "shell"
+    ],
+    "schedule": true
+  },
+  "secrets": [],
+  "setup": {
+    "health": "health"
+  },
+  "schedules": [
+    {
+      "name": "sync-orders",
+      "cron": "0 9,21 * * *",
+      "tz": "Asia/Ho_Chi_Minh",
+      "command": "syncOrders"
+    }
+  ]
+}

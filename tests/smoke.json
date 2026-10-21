@@ -1,0 +1,14 @@
+[
+  { "command": "state", "args": {}, "expect": { "configured": false } },
+  { "command": "health", "args": {}, "expect": { "configured": false } },
+  { "command": "suggest", "args": { "niche": "mỹ phẩm" }, "expect": { "keywords": ["serum", "kem", "dưỡng", "toner", "sữa rửa mặt", "mặt nạ", "skincare", "mỹ phẩm"] } },
+  { "command": "saveConfig", "args": { "config": { "brand": { "name": "Shop Demo", "niche": "giày dép" }, "facebook": { "pageUrl": "https://www.facebook.com/demo" } } }, "expect": { "ok": true } },
+  { "command": "state", "args": {}, "expect": { "configured": true } },
+  { "command": "addOrder", "args": { "product": "Giày sneaker trắng", "orderValue": 400000, "commissionRate": 10 }, "expect": { "commission": 40000, "status": "pending" } },
+  { "command": "setOrderStatus", "args": { "id": "$6.id", "status": "confirmed" }, "expect": { "status": "confirmed" } },
+  { "command": "addToCatalog", "args": { "name": "Dép quai ngang", "price": "99.000đ", "link": "https://s.shopee.vn/demo" }, "expect": { "name": "Dép quai ngang" } },
+  { "command": "removeFromCatalog", "args": { "id": "$8.id" }, "expect": { "ok": true } },
+  { "command": "deleteOrder", "args": { "id": "$6.id" }, "expect": { "ok": true } },
+  { "command": "resetAll", "args": { "confirm": "XOA" }, "expect": { "ok": true } },
+  { "command": "state", "args": {}, "expect": { "configured": false } }
+]
